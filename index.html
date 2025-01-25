@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>動画アップロード</title>
+</head>
+<body>
+
+  <h1>動画アップロードフォーム</h1>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="videos" multiple />
+    <button type="submit">アップロード</button>
+  </form>
+
+  <div id="uploadedVideos">
+    <h2>アップロードされた動画</h2>
+    <div>
+      <label for="videoSize">サイズを選択:</label>
+      <select id="videoSize">
+        <option value="small">小（320x180）</option>
+        <option value="medium">中（640x360）</option>
+        <option value="large">大（1280x720）</option>
+      </select>
+    </div>
+    <ul id="videoList"></ul>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const videoList = document.getElementById('videoList');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('http://localhost:5001/upload-multiple', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        const videoUrls = await response.json();
+        videoList.innerHTML = ''; // 既存のリストをクリア
+
+        // アップロードされた動画URLをリストに表示
+        videoUrls.forEach(url => {
+          const li = document.createElement('li');
+          const video = document.createElement('video');
+          video.src = url;
+          video.controls = true;
+
+          // デフォルトの動画サイズを指定する
+          video.width = 640;
+          video.height = 360;
+
+          li.appendChild(video);
+          videoList.appendChild(li);
+        });
+      } catch (error) {
+        console.error('動画のアップロードに失敗しました:', error);
+      }
+    });
+
+    // 動画サイズ選択セレクトボックスのイベント
+    const videoSizeSelector = document.getElementById('videoSize');
+    videoSizeSelector.addEventListener('change', (event) => {
+      const selectedSize = event.target.value; //選択されたサイズを取得する
+      const videos = document.querySelectorAll('#videoList video'); //全ての動画要素を取得する
+      
+      // 選択されたサイズに基づいて動画サイズを変更する
+      videos.forEach((video) => {
+        if (selectedSize === 'small') {
+          video.width = 320;
+          video.height = 180;
+        } else if (selectedSize == 'medium') {
+          video.width = 640;
+          video.height = 360;
+        } else if (selectedSize == 'large') {
+          video.width = 1280;
+          video.height = 720;
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
